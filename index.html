@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
+<title>Primecare Chiropractic - MVA Intake</title>
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Primecare Intake">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --teal:#4d7f85;
+    --teal-dark:#3a6167;
+    --teal-light:#e8f1f2;
+    --ink:#233238;
+    --border:#d7e0e2;
+    --danger:#b0413e;
+    --bg:#f4f7f8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-tap-highlight-color:transparent;
+  }
+  header.top{
+    background:var(--teal);
+    color:#fff;
+    padding:18px 20px calc(18px + env(safe-area-inset-top,0px));
+    padding-top:calc(18px + env(safe-area-inset-top,0px));
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index:20;
+  }
+  header.top h1{margin:0;font-size:20px;font-weight:700;}
+  header.top p{margin:4px 0 0;font-size:13px;opacity:.9;}
+  .progress-wrap{
+    background:#fff;
+    border-bottom:1px solid var(--border);
+    padding:10px 20px;
+    position:sticky;
+    top:64px;
+    z-index:19;
+  }
+  .progress-bar{height:6px;background:var(--teal-light);border-radius:3px;overflow:hidden;}
+  .progress-fill{height:100%;background:var(--teal);transition:width .25s ease;}
+  .progress-label{font-size:12px;color:#667;margin-top:6px;text-align:center;}
+  main{max-width:640px;margin:0 auto;padding:20px 16px 140px;}
+  .card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:20px 18px;
+    margin-bottom:16px;
+  }
+  .step{display:none;}
+  .step.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .step h2{
+    font-size:18px;
+    margin:0 0 4px;
+    color:var(--teal-dark);
+  }
+  .step .sub{font-size:13px;color:#667;margin:0 0 18px;}
+  fieldset{
+    border:none;
+    padding:0;
+    margin:0 0 20px;
+  }
+  legend{
+    font-weight:600;
+    font-size:14.5px;
+    margin-bottom:8px;
+    padding:0;
+    color:var(--ink);
+  }
+  legend .hint{display:block;font-weight:400;font-size:12.5px;color:#778;margin-top:2px;}
+  label.field{display:block;margin-bottom:14px;}
+  label.field span.lbl{display:block;font-size:14.5px;font-weight:600;margin-bottom:6px;}
+  input[type=text],input[type=email],input[type=tel],input[type=date],input[type=time],input[type=number],textarea,select{
+    width:100%;
+    padding:11px 12px;
+    border:1.5px solid var(--border);
+    border-radius:10px;
+    font-size:16px;
+    background:#fbfcfc;
+    font-family:inherit;
+    color:var(--ink);
+  }
+  textarea{min-height:70px;resize:vertical;}
+  input:focus,textarea:focus,select:focus{outline:2px solid var(--teal);outline-offset:1px;background:#fff;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .choice-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .choice{
+    border:1.5px solid var(--border);
+    border-radius:20px;
+    padding:9px 15px;
+    font-size:14px;
+    cursor:pointer;
+    background:#fff;
+    user-select:none;
+    transition:.12s;
+  }
+  .choice input{position:absolute;opacity:0;width:0;height:0;}
+  .choice.selected{background:var(--teal);border-color:var(--teal);color:#fff;}
+  .choice-grid.block .choice{flex:1 1 100%;text-align:center;}
+  .choice-grid.two .choice{flex:1 1 calc(50% - 8px);text-align:center;}
+  .conditional{
+    border-left:3px solid var(--teal-light);
+    padding-left:12px;
+    margin-top:10px;
+    display:none;
+  }
+  .conditional.show{display:block;}
+  .pain-scale{display:flex;gap:5px;flex-wrap:wrap;justify-content:space-between;}
+  .pain-scale .choice{flex:1 1 auto;min-width:30px;padding:9px 0;text-align:center;border-radius:8px;}
+  .scale-labels{display:flex;justify-content:space-between;font-size:11.5px;color:#778;margin-top:6px;}
+  .body-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+  .body-map .choice{flex:none;width:100%;text-align:left;border-radius:8px;font-size:13.5px;padding:8px 10px;}
+  nav.wizard-nav{
+    position:fixed;
+    bottom:0;left:0;right:0;
+    background:#fff;
+    border-top:1px solid var(--border);
+    padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));
+    display:flex;
+    gap:10px;
+    z-index:20;
+  }
+  nav.wizard-nav button{
+    flex:1;
+    padding:14px;
+    border-radius:12px;
+    border:none;
+    font-size:16px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  #btnBack{background:#eef2f2;color:var(--ink);}
+  #btnNext,#btnSubmit{background:var(--teal);color:#fff;}
+  #btnNext:disabled,#btnSubmit:disabled{opacity:.5;}
+  .add-btn{
+    background:var(--teal-light);
+    border:1.5px dashed var(--teal);
+    color:var(--teal-dark);
+    padding:10px 14px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    width:100%;
+    margin-top:6px;
+  }
+  .remove-btn{
+    background:none;border:none;color:var(--danger);font-size:13px;font-weight:600;cursor:pointer;padding:4px 0;
+  }
+  .ros-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:9px 0;
+    border-bottom:1px solid #eef2f2;
+    gap:8px;
+  }
+  .ros-row .ros-name{font-size:14px;flex:1;}
+  .ros-row .ros-controls{display:flex;gap:6px;align-items:center;}
+  .ros-row .choice{padding:6px 12px;font-size:13px;border-radius:14px;}
+  .ros-row .after-check{font-size:11.5px;color:#778;display:flex;align-items:center;gap:4px;white-space:nowrap;}
+  .ros-system-title{
+    font-weight:700;
+    font-size:13px;
+    color:var(--teal-dark);
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    margin:16px 0 4px;
+  }
+  .review-section{margin-bottom:16px;}
+  .review-section h3{font-size:14.5px;color:var(--teal-dark);margin:0 0 8px;border-bottom:1.5px solid var(--teal-light);padding-bottom:4px;}
+  .review-item{display:flex;font-size:13.5px;padding:3px 0;gap:6px;}
+  .review-item .k{color:#667;min-width:44%;}
+  .review-item .v{font-weight:600;flex:1;}
+  .sig-pad-wrap{border:1.5px solid var(--border);border-radius:10px;background:#fff;touch-action:none;}
+  canvas#sigPad{width:100%;height:150px;display:block;touch-action:none;border-radius:10px;}
+  .sig-clear{margin-top:6px;font-size:13px;color:var(--teal-dark);background:none;border:none;text-decoration:underline;cursor:pointer;padding:4px 0;}
+  .consent-box{
+    background:var(--teal-light);
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:13px;
+    line-height:1.5;
+    margin-bottom:14px;
+    color:#33474c;
+  }
+  .checkline{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+  .checkline input{margin-top:3px;width:18px;height:18px;flex:none;}
+  .checkline span{font-size:14px;line-height:1.4;}
+  #screenDone{display:none;}
+  #screenDone.active{display:block;}
+  .done-wrap{max-width:520px;margin:60px auto;text-align:center;padding:0 24px;}
+  .done-wrap .icon{font-size:52px;}
+  .done-wrap h2{color:var(--teal-dark);}
+  .status-line{font-size:14px;color:#556;margin-top:18px;}
+  .dl-links{margin-top:22px;display:flex;flex-direction:column;gap:10px;}
+  .dl-links a,.dl-links button{
+    display:block;background:var(--teal);color:#fff;text-decoration:none;padding:13px;border-radius:10px;font-weight:600;font-size:15px;border:none;cursor:pointer;
+  }
+  .dl-links .secondary{background:#eef2f2;color:var(--ink);}
+  #screenIntro{max-width:560px;margin:24px auto;padding:0 16px;}
+  #screenIntro .card{text-align:center;}
+  #screenIntro h2{color:var(--teal-dark);}
+  #screenIntro button{
+    background:var(--teal);color:#fff;border:none;padding:15px 20px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;width:100%;margin-top:14px;
+  }
+  .error-banner{
+    background:#fdecea;border:1px solid #f3b8b3;color:#8a2f2b;padding:10px 14px;border-radius:10px;font-size:13.5px;margin-bottom:14px;
+  }
+  #wizardWrap{display:none;}
+  #wizardWrap.active{display:block;}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Primecare Chiropractic</h1>
+  <p>New Patient / MVA Intake</p>
+</header>
+
+<div id="screenIntro">
+  <div class="card">
+    <h2>Welcome</h2>
+    <p style="font-size:14.5px;color:#556;line-height:1.5;">
+      Please complete this intake before your first visit. It covers your accident details,
+      medical history, and current symptoms. It takes about 8&ndash;10 minutes.
+      Your information stays on this device until you submit.
+    </p>
+    <button id="btnStart">Start Intake</button>
+  </div>
+</div>
+
+<div id="wizardWrap">
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label" id="progressLabel">Step 1 of 8</div>
+  </div>
+
+  <main>
+    <form id="intakeForm" autocomplete="off">
+
+    <!-- STEP 1: Registration -->
+    <div class="step active" data-step="1">
+      <div class="card">
+        <h2>Your Information</h2>
+        <p class="sub">Basic contact and registration details.</p>
+
+        <label class="field"><span class="lbl">Full Legal Name *</span>
+          <input type="text" name="fullName" required></label>
+
+        <div class="row2">
+          <label class="field"><span class="lbl">Date of Birth *</span>
+            <input type="date" name="birthDate" required></label>
+          <label class="field"><span class="lbl">Today's Date</span>
+            <input type="date" name="regDate"></label>
+        </div>
+
+        <label class="field"><span class="lbl">Address *</span>
+          <input type="text" name="address" required></label>
+        <div class="row2">
+          <label class="field"><span class="lbl">Apt #</span><input type="text" name="apt"></label>
+          <label class="field"><span class="lbl">City *</span><input type="text" name="city" required></label>
+        </div>
+        <div class="row2">
+          <label class="field"><span class="lbl">State</span><input type="text" name="state" value="MA"></label>
+          <label class="field"><span class="lbl">Zip</span><input type="text" name="zip"></label>
+        </div>
+        <div class="row2">
+          <label class="field"><span class="lbl">Cell Phone *</span><input type="tel" name="cell" required></label>
+          <label class="field"><span class="lbl">Email *</span><input type="email" name="email" required></label>
+        </div>
+        <div class="row2">
+          <label class="field"><span class="lbl">Preferred Language</span><input type="text" name="language" value="English"></label>
+          <div>
+            <span class="lbl" style="display:block;font-size:14.5px;font-weight:600;margin-bottom:6px;">Need an Interpreter?</span>
+            <div class="choice-grid two" data-group="interpreterNeed">
+              <label class="choice"><input type="radio" name="interpreterNeed" value="Yes"><span>Yes</span></label>
+              <label class="choice"><input type="radio" name="interpreterNeed" value="No"><span>No</span></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="consent-box">
+          I authorize Primecare Chiropractic to contact me through email, text message, WhatsApp,
+          or other electronic media.
+        </div>
+        <div class="checkline">
+          <input type="checkbox" name="consentContact" id="consentContact">
+          <span>I agree to be contacted electronically as described above. *</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: Accident details -->
+    <div class="step" data-step="2">
+      <div class="card">
+        <h2>Accident Details</h2>
+        <p class="sub">Tell us about the motor vehicle accident.</p>
+
+        <div class="row2">
+          <label class="field"><span class="lbl">Date of Accident *</span><input type="date" name="accidentDate" required></label>
+          <label class="field"><span class="lbl">Time of Accident</span><input type="time" name="accidentTime"></label>
+        </div>
+        <label class="field"><span class="lbl">Street Where Accident Occurred</span><input type="text" name="accidentStreet"></label>
+        <div class="row2">
+          <label class="field"><span class="lbl">City of Accident</span><input type="text" name="accidentCity"></label>
+          <label class="field"><span class="lbl">License Plate (vehicle you were in)</span><input type="text" name="licensePlate"></label>
+        </div>
+        <label class="field"><span class="lbl">Auto Insurance (vehicle you were in)</span><input type="text" name="autoInsurance"></label>
+        <label class="field"><span class="lbl">Describe Your Injuries</span><textarea name="injuriesDescribe"></textarea></label>
+
+        <fieldset>
+          <legend>Yes/No Questions</legend>
+          <div id="yn-basic"></div>
+        </fieldset>
+
+        <div class="row2">
+          <label class="field"><span class="lbl">Is your car in a bodyshop? Which one?</span><input type="text" name="bodyshopWhich" placeholder="Leave blank if no"></label>
+          <label class="field"><span class="lbl">Rideshare app (Uber/Lyft/Instacart)? Which?</span><input type="text" name="rideshareWhich" placeholder="Leave blank if no"></label>
+        </div>
+
+        <fieldset>
+          <legend>Where was your vehicle damaged? <span class="hint">Select all that apply</span></legend>
+          <div class="choice-grid" data-group="vehicleDamage" id="vehicleDamageGrid"></div>
+        </fieldset>
+
+        <label class="field"><span class="lbl">Accident Description</span><textarea name="accidentDescription" placeholder="Briefly describe what happened"></textarea></label>
+
+        <fieldset>
+          <legend>Insurance / Claim Info <span class="hint">If known - front desk can help complete this</span></legend>
+          <label class="field"><span class="lbl">PIP Claim Number</span><input type="text" name="pipClaimNumber"></label>
+          <label class="field"><span class="lbl">Policy Number</span><input type="text" name="policyNumber"></label>
+          <label class="field"><span class="lbl">Policy Holder Name</span><input type="text" name="policyHolderName"></label>
+          <label class="field"><span class="lbl">Policy Holder Birth Date</span><input type="date" name="policyHolderDob"></label>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- STEP 3: Pain diagram -->
+    <div class="step" data-step="3">
+      <div class="card">
+        <h2>Where Does It Hurt?</h2>
+        <p class="sub">Select every area where you currently feel pain.</p>
+        <fieldset>
+          <legend>Areas of Pain</legend>
+          <div class="body-map" id="painAreaGrid"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Overall Pain Intensity <span class="hint">0 = No pain, 10 = Worst pain possible</span></legend>
+          <div class="pain-scale" id="painScaleGrid"></div>
+          <div class="scale-labels"><span>No pain</span><span>Worst possible</span></div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- STEP 4: Medical history -->
+    <div class="step" data-step="4">
+      <div class="card">
+        <h2>Medical History</h2>
+        <p class="sub">This helps our providers treat you safely.</p>
+
+        <fieldset>
+          <legend>1. Have you had any surgery? <span class="hint">e.g. C-section, knee, back</span></legend>
+          <div class="choice-grid two" data-group="mh_surgery">
+            <label class="choice"><input type="radio" name="mh_surgery" value="Yes"><span>Yes</span></label>
+            <label class="choice"><input type="radio" name="mh_surgery" value="No"><span>No</span></label>
+          </div>
+          <div class="conditional" data-show-for="mh_surgery" data-show-val="Yes">
+            <div class="row2">
+              <label class="field"><span class="lbl">What?</span><input type="text" name="mh_surgery_what"></label>
+              <label class="field"><span class="lbl">When?</span><input type="text" name="mh_surgery_when"></label>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>2. Do you take medication daily? <span class="hint">e.g. blood pressure, diabetes, anxiety</span></legend>
+          <div class="choice-grid two" data-group="mh_meds">
+            <label class="choice"><input type="radio" name="mh_meds" value="Yes"><span>Yes</span></label>
+            <label class="choice"><input type="radio" name="mh_meds" value="No"><span>No</span></label>
+          </div>
+          <div class="conditional" data-show-for="mh_meds" data-show-val="Yes">
+            <div class="row2">
+              <label class="field"><span class="lbl">What?</span><input type="text" name="mh_meds_what"></label>
+              <label class="field"><span class="lbl">Who prescribed?</span><input type="text" name="mh_meds_who"></label>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>3. Do you have any health problems? <span class="hint">e.g. heart, pain, anxiety, hospital visits</span></legend>
+          <div class="choice-grid two" data-group="mh_health">
+            <label class="choice"><input type="radio" name="mh_health" value="Yes"><span>Yes</span></label>
+            <label class="choice"><input type="radio" name="mh_health" value="No"><span>No</span></label>
+          </div>
+          <div class="conditional" data-show-for="mh_health" data-show-val="Yes">
+            <div class="row2">
+              <label class="field"><span class="lbl">What?</span><input type="text" name="mh_health_what"></label>
+              <label class="field"><span class="lbl">Since when?</span><input type="text" name="mh_health_since"></label>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>4. Any previous accident? <span class="hint">e.g. car, fall, work</span></legend>
+          <div class="choice-grid two" data-group="mh_prev_accident">
+            <label class="choice"><input type="radio" name="mh_prev_accident" value="Yes"><span>Yes</span></label>
+            <label class="choice"><input type="radio" name="mh_prev_accident" value="No"><span>No</span></label>
+          </div>
+          <div class="conditional" data-show-for="mh_prev_accident" data-show-val="Yes">
+            <label class="field"><span class="lbl">What?</span><input type="text" name="mh_prev_what"></label>
+            <div class="row2">
+              <label class="field"><span class="lbl">When?</span><input type="text" name="mh_prev_when"></label>
+              <label class="field"><span class="lbl">Treatment?</span><input type="text" name="mh_prev_treatment"></label>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>5. Medical history (you or family) <span class="hint">Select all that apply</span></legend>
+          <div class="choice-grid" data-group="mh_family" id="mhFamilyGrid"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>6. VERY IMPORTANT &mdash; check any that apply to you</legend>
+          <div class="choice-grid" data-group="mh_critical" id="mhCriticalGrid"></div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- STEP 5: MVA chief complaints -->
+    <div class="step" data-step="5">
+      <div class="card">
+        <h2>MVA Chief Complaints</h2>
+        <p class="sub">Details about how the accident happened.</p>
+
+        <fieldset>
+          <legend>1. What was the cause of your injury?</legend>
+          <div class="choice-grid block" data-group="causeOfInjury" id="causeGrid"></div>
+        </fieldset>
+
+        <label class="field"><span class="lbl">2. Date of Injury</span><input type="date" name="dateOfInjury"></label>
+
+        <fieldset>
+          <legend>3. Position in vehicle?</legend>
+          <div class="choice-grid block" data-group="positionInVehicle" id="positionGrid"></div>
+        </fieldset>
+
+        <fieldset><legend>4. Restrained (seatbelt)?</legend><div class="choice-grid" data-group="restrained" id="restrainedGrid"></div></fieldset>
+        <fieldset><legend>5. Airbag deploy?</legend><div class="choice-grid" data-group="airbagDeploy" id="airbagGrid"></div></fieldset>
+        <fieldset><legend>6. Head hit head rest?</legend><div class="choice-grid" data-group="headHitHeadrest" id="headrestGrid"></div></fieldset>
+
+        <fieldset>
+          <legend>7. Patient's head position during impact?</legend>
+          <div class="choice-grid block" data-group="headDuringImpact" id="headImpactGrid"></div>
+        </fieldset>
+
+        <fieldset><legend>8. Did you contact the interior of the vehicle?</legend><div class="choice-grid" data-group="contactInterior" id="contactInteriorGrid"></div></fieldset>
+
+        <div class="conditional" data-show-for="contactInterior" data-show-val="Yes">
+          <fieldset>
+            <legend>9. What part of your body?</legend>
+            <div class="choice-grid" data-group="bodyPartContact" id="bodyPartGrid"></div>
+          </fieldset>
+          <fieldset>
+            <legend>10. What part of the vehicle?</legend>
+            <div class="choice-grid" data-group="vehiclePartContact" id="vehiclePartGrid"></div>
+          </fieldset>
+        </div>
+
+        <fieldset><legend>11. Received head injury? (bruise, concussion)</legend><div class="choice-grid" data-group="headInjury" id="headInjuryGrid"></div></fieldset>
+        <fieldset><legend>12. Lose consciousness?</legend><div class="choice-grid" data-group="lossConsciousness" id="locGrid"></div></fieldset>
+        <fieldset><legend>13. Police at the scene?</legend><div class="choice-grid" data-group="policeAtScene" id="policeGrid"></div></fieldset>
+        <fieldset><legend>14. Accident report?</legend><div class="choice-grid" data-group="accidentReport" id="reportGrid"></div></fieldset>
+        <fieldset><legend>15. EMS at the scene?</legend><div class="choice-grid" data-group="emsAtScene" id="emsGrid"></div></fieldset>
+
+        <fieldset>
+          <legend>16. Transport to ER?</legend>
+          <div class="choice-grid block" data-group="transportER" id="transportERGrid"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>17. Any imaging done? <span class="hint">Select all that apply</span></legend>
+          <div class="choice-grid" data-group="imagingDone" id="imagingGrid"></div>
+        </fieldset>
+        <div class="conditional" id="imagingResultsBlock">
+          <fieldset><legend>18. If so, what was the result?</legend><div id="imagingResultsInner"></div></fieldset>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 6: Symptom / complaint details -->
+    <div class="step" data-step="6">
+      <div class="card">
+        <h2>Your Symptoms</h2>
+        <p class="sub">Describe your main complaint(s) in detail.</p>
+        <div id="complaintsWrap"></div>
+        <button type="button" class="add-btn" id="addComplaintBtn">+ Add another complaint area</button>
+      </div>
+
+      <div class="card">
+        <h2>Since the Accident</h2>
+        <fieldset>
+          <legend>Received any treatment since accident? <span class="hint">Select all that apply</span></legend>
+          <div class="choice-grid" data-group="treatmentSince" id="treatmentSinceGrid"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Work situation?</legend>
+          <div class="choice-grid block" data-group="workSituation" id="workSituationGrid"></div>
+        </fieldset>
+        <div class="conditional" data-show-for="workSituation" data-show-val="Not working">
+          <div class="choice-grid" data-group="workNotWorkingReason" id="workReasonGrid"></div>
+        </div>
+        <fieldset>
+          <legend>Social habits? <span class="hint">Select all that apply</span></legend>
+          <div class="choice-grid" data-group="socialHabits" id="socialHabitsGrid"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Changes in exercise habits?</legend>
+          <div class="choice-grid block" data-group="exerciseChange" id="exerciseChangeGrid"></div>
+        </fieldset>
+        <fieldset>
+          <legend>Changes in diet/nutrition? <span class="hint">Select all that apply</span></legend>
+          <div class="choice-grid" data-group="dietChange" id="dietChangeGrid"></div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- STEP 7: Review of systems -->
+    <div class="step" data-step="7">
+      <div class="card">
+        <h2>Review of Systems</h2>
+        <p class="sub">For each item, mark Yes or No, and whether it started/changed after the accident.</p>
+        <div id="rosWrap"></div>
+      </div>
+    </div>
+
+    <!-- STEP 8: Review & sign -->
+    <div class="step" data-step="8">
+      <div class="card">
+        <h2>Review &amp; Sign</h2>
+        <p class="sub">Please review your answers below before submitting.</p>
+        <div id="reviewWrap"></div>
+      </div>
+      <div class="card">
+        <div class="consent-box">
+          I certify that the information provided in this intake is accurate and complete to
+          the best of my knowledge, and I authorize Primecare Chiropractic to use it for my
+          evaluation and treatment.
+        </div>
+        <label class="field"><span class="lbl">Type your full name as your signature *</span>
+          <input type="text" name="signatureName" id="signatureName"></label>
+        <div class="checkline">
+          <input type="checkbox" name="finalConsent" id="finalConsent">
+          <span>I confirm the above is my electronic signature and the information given is accurate. *</span>
+        </div>
+        <div id="submitError" class="error-banner" style="display:none;"></div>
+      </div>
+    </div>
+
+    </form>
+  </main>
+</div>
+
+<div id="screenDone">
+  <div class="done-wrap">
+    <div class="icon">&#10003;</div>
+    <h2>Thank You!</h2>
+    <p style="color:#556;">Your intake has been received. Two PDFs were generated: your completed
+      intake form, and a starter clinical note for your provider.</p>
+    <div class="status-line" id="sendStatus">Sending to the front desk&hellip;</div>
+    <div class="dl-links">
+      <button id="dlIntake">Download Intake PDF</button>
+      <button id="dlNote" class="secondary">Download Doctor's Note PDF</button>
+    </div>
+  </div>
+</div>
+
+<nav class="wizard-nav" id="wizardNav">
+  <button type="button" id="btnBack">Back</button>
+  <button type="button" id="btnNext">Next</button>
+  <button type="button" id="btnSubmit" style="display:none;">Submit Intake</button>
+</nav>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const CLINIC = {
+  name: "Primecare Chiropractic",
+  address: "600 Main Street",
+  cityStateZip: "Malden, MA 02148",
+  phone: "(857) 410-1800",
+  email: "info@primecaremalden.com",
+  submitTo: "frontdesk@primecare.clinic"
+};
+// Google Apps Script Web App URL (same email backend already used by the
+// clinic's other patient forms — sends to frontdesk@primecare.clinic).
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_KqBcnLDBMZZ0oaLl-cOcaK3CsIIp7QVho-zEtbY-lUCb9gAtyb2eDzc2rLooallUhg/exec";
+
+/* ============================================================
+   OPTION LISTS
+   ============================================================ */
+const YN = ["Yes","No"];
+const YNDNA = ["Yes","No","Doesn't remember","N/A"];
+const YNDN = ["Yes","No","Doesn't remember"];
+
+const VEHICLE_DAMAGE = ["Front","Front-Left","Left","Rear-Left","Rear","Rear-Right","Right","Front-Right","Roof","Undercarriage","None"];
+
+const PAIN_AREAS = ["Head","Neck","Left Shoulder","Right Shoulder","Upper Back","Mid Back","Low Back",
+  "Left Arm","Right Arm","Left Hand","Right Hand","Chest","Abdomen","Buttocks",
+  "Left Hip","Right Hip","Left Leg","Right Leg","Left Knee","Right Knee","Left Foot","Right Foot"];
+
+const MH_FAMILY = ["Diabetes","High blood pressure","Heart problems","Stroke","Cancer"];
+const MH_CRITICAL = ["Pacemaker","Pregnant","Metal implants","Blood clots","Cancer/tumor","Loss of sensation"];
+
+const CAUSE_OF_INJURY = ["Vehicle vs Vehicle","Motorcycle vs Vehicle","Pedestrian vs Vehicle",
+  "Vehicle vs Object","Motorcycle vs Object","Pedestrian vs Object (slip, trip)","Bicycle","Fall"];
+
+const POSITION_IN_VEHICLE = ["Driver","Front passenger","Back seat passenger","Pedestrian","Bicycle","Motorcycle"];
+
+const HEAD_DURING_IMPACT = ["Straight","Down","Over left shoulder","Over right shoulder","To the left","To the right","Doesn't remember"];
+
+const BODY_PART_CONTACT = ["Any body part (none)","Back of head/neck","Front of head","Left side of head","Right side of head",
+  "Left chest","Right chest","Left shoulder","Right shoulder","Left arm","Right arm","Left leg","Right leg",
+  "Left foot","Right foot","Left knee","Right knee","Stomach","Doesn't remember"];
+
+const VEHICLE_PART_CONTACT = ["None","Airbag","Armrest","Dashboard","Door","Steering wheel","Window","N/A","Doesn't remember"];
+
+const TRANSPORT_ER = ["Went to ER - Ambulance","Went to ER - other transport","Denied ER transport"];
+
+const IMAGING_DONE = ["No","X-Ray","MRI","CT Scan","Nerve Conduction Test","Other"];
+const IMAGING_RESULT_KEYS = [["xray","X-Ray"],["mri","MRI"],["ct","CT Scan"],["nerve","Nerve Conduction Test"]];
+const RESULT_OPTS = ["Normal","Abnormal","N/A"];
+
+const DESCRIPTORS = ["Dull","Sharp","Aching","Burning","Deep","Tight","Stiff","Numbness","Tingling"];
+const FREQUENCY_OPTS = ["Constant","Frequent","Intermittent","Occasional"];
+const RADIATION_OPTS = ["Non-radiating","Down left arm","Down right arm","Down left leg","Down right leg",
+  "Up left side of neck","Up right side of neck","Around the chest","Back"];
+const RADIATION_TIMING = ["Waking up in the morning","Sleeping","Arm overhead","Driving","Other","Unsure"];
+const CHANGE_OPTS = ["Worsened","Stayed the same","Improved"];
+const HELPS_OPTS = ["Nothing helps","Over the counter","Prescribed medication","Ice","Heat","Massage","Rest"];
+const WORSENS_OPTS = ["Most movements","Lifting","Caring for family","Household chores","Going up/down stairs",
+  "Bending","Driving","Sleeping","Sitting","Standing","Stress","Walking","Working","Specific movement"];
+
+const TREATMENT_SINCE = ["None","Following up with PCP","Chiropractor","Physical therapy","Acupuncture",
+  "Over the counter","Prescribed medication","Neurologist","Other"];
+const WORK_SITUATION = ["Full-time","Part-time","Not working"];
+const WORK_NOT_WORKING_REASON = ["No car due to MVA","Due to the pain"];
+const SOCIAL_HABITS = ["Drinking","Smoking","Recreational drugs","None"];
+const EXERCISE_CHANGE = ["No change since MVA","Unable to exercise due to MVA"];
+const DIET_CHANGE = ["No change since MVA","Loss of appetite","Compulsive eating","Other"];
+
+const ROS = [
+  ["Constitutional",["Weight Loss","Fatigue","Fever"]],
+  ["Eyes",["Glasses","Contacts","Eye Pain","Double Vision","Cataracts"]],
+  ["Cardiovascular",["Murmur","Chest Pain","Palpitations","Fainting Spells","Short of Breath","Difficulty Lying Flat","Swelling in Ankles"]],
+  ["Endocrine",["Loss of Hair","Heat Intolerance","Cold Intolerance"]],
+  ["Psychiatric",["Anxiety","Depression","Mood Swing","Difficulty Sleeping"]],
+  ["Gastrointestinal",["Heartburn/Reflux","Nausea/Vomiting","Constipation","Change in Bowel Movements","Diarrhea","Jaundice","Abdominal Pain","Bloody Bowel"]],
+  ["Genitourinary",["Blood in Urine","Bladder Leakage"]],
+  ["Respiratory",["Cough","Cough Blood","Wheezing","Chills"]],
+  ["Allergic",["Hives/Eczema","Hay Fever"]],
+  ["Hematology/Lymph",["Bruise Easily","Gums Bleed Easily","Enlarged Glands"]],
+  ["Muscle/Bone",["Joint Pain/Swelling","Stiffness","Muscle Pain","Bone Pain"]],
+  ["Skin",["Rashes/Sores","Lesions","Itching/Burning"]],
+  ["Neurological",["Loss of Strength","Numbness","Headaches","Tremors","Memory Loss"]]
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentStep = 1;
+const TOTAL_STEPS = 8;
+let complaintCount = 0;
+const state = { complaints: [] };
+
+/* ============================================================
+   HELPERS: build choice grids
+   ============================================================ */
+function choiceHTML(group, value, checkbox){
+  const type = checkbox ? "checkbox" : "radio";
+  const id = group+"_"+value.replace(/[^a-z0-9]/gi,"");
+  return `<label class="choice" data-group="${group}" data-value="${value}">
+    <input type="${type}" name="${group}${checkbox?'[]':''}" value="${value}">
+    <span>${value}</span></label>`;
+}
+function fillGrid(elId, group, options, checkbox){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = options.map(o=>choiceHTML(group,o,checkbox)).join("");
+}
+function isMulti(el){ return el.querySelector("input[type=checkbox]") !== null; }
+
+// event delegation for all choice toggles
+document.addEventListener("click", function(e){
+  const label = e.target.closest(".choice");
+  if(!label) return;
+  const input = label.querySelector("input");
+  const grid = label.closest("[data-group]");
+  if(input.type === "checkbox"){
+    input.checked = !input.checked;
+    label.classList.toggle("selected", input.checked);
+  } else {
+    // radio: clear siblings within same grid
+    grid.querySelectorAll(".choice").forEach(c=>c.classList.remove("selected"));
+    input.checked = true;
+    label.classList.add("selected");
+  }
+  refreshConditionals();
+});
+
+function fillYNBasic(){
+  const el = document.getElementById("yn-basic");
+  const items = [
+    ["ambulance","Ambulance called?"],
+    ["erHospital","Went to ER/Hospital?"],
+    ["masshealth","Do you have MassHealth?"],
+    ["masshealthCard","Do you have MassHealth Card?"],
+    ["privateInsurance","Do you have Private Health Insurance?"],
+    ["healthInsCard","Do you have your Health Insurance Card?"],
+    ["policeReport","Was a Police Report filed?"]
+  ];
+  el.innerHTML = items.map(([name,label])=>`
+    <div style="margin-bottom:12px;">
+      <div style="font-size:14px;margin-bottom:6px;">${label}</div>
+      <div class="choice-grid two" data-group="${name}">
+        ${choiceHTML(name,"Yes",false)}${choiceHTML(name,"No",false)}
+      </div>
+    </div>`).join("") +
+    `<label class="field"><span class="lbl">MassHealth ID Number (if applicable)</span><input type="text" name="masshealthId"></label>`;
+}
+
+/* ============================================================
+   BUILD ALL STATIC GRIDS
+   ============================================================ */
+function buildStaticGrids(){
+  fillYNBasic();
+  fillGrid("vehicleDamageGrid","vehicleDamage",VEHICLE_DAMAGE,true);
+  fillGrid("painAreaGrid","painAreas",PAIN_AREAS,true);
+  const ps = document.getElementById("painScaleGrid");
+  ps.innerHTML = Array.from({length:11},(_,i)=>i).map(n=>choiceHTML("painIntensity",String(n),false)).join("");
+  fillGrid("mhFamilyGrid","mh_family",MH_FAMILY,true);
+  fillGrid("mhCriticalGrid","mh_critical",MH_CRITICAL,true);
+  fillGrid("causeGrid","causeOfInjury",CAUSE_OF_INJURY,false);
+  fillGrid("positionGrid","positionInVehicle",POSITION_IN_VEHICLE,false);
+  fillGrid("restrainedGrid","restrained",YNDNA,false);
+  fillGrid("airbagGrid","airbagDeploy",YNDNA,false);
+  fillGrid("headrestGrid","headHitHeadrest",YNDNA,false);
+  fillGrid("headImpactGrid","headDuringImpact",HEAD_DURING_IMPACT,false);
+  fillGrid("contactInteriorGrid","contactInterior",YNDNA,false);
+  fillGrid("bodyPartGrid","bodyPartContact",BODY_PART_CONTACT,true);
+  fillGrid("vehiclePartGrid","vehiclePartContact",VEHICLE_PART_CONTACT,true);
+  fillGrid("headInjuryGrid","headInjury",YNDN,false);
+  fillGrid("locGrid","lossConsciousness",YNDN,false);
+  fillGrid("policeGrid","policeAtScene",YNDN,false);
+  fillGrid("reportGrid","accidentReport",YNDN,false);
+  fillGrid("emsGrid","emsAtScene",YNDN,false);
+  fillGrid("transportERGrid","transportER",TRANSPORT_ER,false);
+  fillGrid("imagingGrid","imagingDone",IMAGING_DONE,true);
+  document.getElementById("imagingResultsInner").innerHTML = IMAGING_RESULT_KEYS.map(([key,label])=>`
+    <div style="margin-bottom:10px;">
+      <div style="font-size:13.5px;margin-bottom:6px;color:#556;">${label}</div>
+      <div class="choice-grid" data-group="imgres_${key}">${RESULT_OPTS.map(o=>choiceHTML("imgres_"+key,o,false)).join("")}</div>
+    </div>`).join("");
+
+  fillGrid("treatmentSinceGrid","treatmentSince",TREATMENT_SINCE,true);
+  fillGrid("workSituationGrid","workSituation",WORK_SITUATION,false);
+  fillGrid("workReasonGrid","workNotWorkingReason",WORK_NOT_WORKING_REASON,true);
+  fillGrid("socialHabitsGrid","socialHabits",SOCIAL_HABITS,true);
+  fillGrid("exerciseChangeGrid","exerciseChange",EXERCISE_CHANGE,false);
+  fillGrid("dietChangeGrid","dietChange",DIET_CHANGE,true);
+
+  buildROS();
+  addComplaint(); // first complaint block by default
+}
+
+function buildROS(){
+  const wrap = document.getElementById("rosWrap");
+  let html = "";
+  ROS.forEach(([system,items])=>{
+    html += `<div class="ros-system-title">${system}</div>`;
+    items.forEach(item=>{
+      const key = "ros_"+system.replace(/[^a-z]/gi,"")+"_"+item.replace(/[^a-z]/gi,"");
+      html += `<div class="ros-row">
+        <div class="ros-name">${item}</div>
+        <div class="ros-controls">
+          <div class="choice-grid" data-group="${key}">
+            <label class="choice" data-group="${key}" data-value="Y"><input type="radio" name="${key}" value="Y"><span>Y</span></label>
+            <label class="choice" data-group="${key}" data-value="N"><input type="radio" name="${key}" value="N"><span>N</span></label>
+          </div>
+          <label class="after-check"><input type="checkbox" name="${key}_after" value="1"> After accident?</label>
+        </div>
+      </div>`;
+    });
+  });
+  wrap.innerHTML = html;
+}
+
+/* ============================================================
+   COMPLAINT BLOCKS (dynamic, repeatable)
+   ============================================================ */
+function addComplaint(){
+  complaintCount++;
+  const idx = complaintCount;
+  const wrap = document.getElementById("complaintsWrap");
+  const div = document.createElement("div");
+  div.className = "complaint-block";
+  div.dataset.idx = idx;
+  div.innerHTML = `
+    <fieldset>
+      <legend>Complaint #${idx} ${idx>1?'<button type="button" class="remove-btn" data-remove="'+idx+'">Remove</button>':''}</legend>
+      <label class="field"><span class="lbl">Where is this pain located?</span>
+        <input type="text" name="c${idx}_location" placeholder="e.g. neck, left shoulder, low back"></label>
+
+      <legend style="margin-top:14px;">How would you describe it? <span class="hint">Select all that apply</span></legend>
+      <div class="choice-grid" data-group="c${idx}_descriptors">${DESCRIPTORS.map(o=>choiceHTML("c"+idx+"_descriptors",o,true)).join("")}</div>
+
+      <legend style="margin-top:14px;">Frequency</legend>
+      <div class="choice-grid" data-group="c${idx}_frequency">${FREQUENCY_OPTS.map(o=>choiceHTML("c"+idx+"_frequency",o,false)).join("")}</div>
+
+      <legend style="margin-top:14px;">Pain level (0-10)</legend>
+      <div class="pain-scale" data-group="c${idx}_severity">${Array.from({length:11},(_,i)=>i).map(n=>choiceHTML("c"+idx+"_severity",String(n),false)).join("")}</div>
+
+      <legend style="margin-top:14px;">Does it radiate?</legend>
+      <div class="choice-grid" data-group="c${idx}_radiation">${RADIATION_OPTS.map(o=>choiceHTML("c"+idx+"_radiation",o,false)).join("")}</div>
+
+      <legend style="margin-top:14px;">When do you feel it most? <span class="hint">Select all that apply</span></legend>
+      <div class="choice-grid" data-group="c${idx}_timing">${RADIATION_TIMING.map(o=>choiceHTML("c"+idx+"_timing",o,true)).join("")}</div>
+
+      <legend style="margin-top:14px;">Since the accident, has it changed?</legend>
+      <div class="choice-grid" data-group="c${idx}_change">${CHANGE_OPTS.map(o=>choiceHTML("c"+idx+"_change",o,false)).join("")}</div>
+
+      <legend style="margin-top:14px;">What helps? <span class="hint">Select all that apply</span></legend>
+      <div class="choice-grid" data-group="c${idx}_helps">${HELPS_OPTS.map(o=>choiceHTML("c"+idx+"_helps",o,true)).join("")}</div>
+
+      <legend style="margin-top:14px;">What makes it worse? <span class="hint">Select all that apply</span></legend>
+      <div class="choice-grid" data-group="c${idx}_worsens">${WORSENS_OPTS.map(o=>choiceHTML("c"+idx+"_worsens",o,true)).join("")}</div>
+
+      <legend style="margin-top:14px;">Related to any previous episode?</legend>
+      <div class="choice-grid two" data-group="c${idx}_relatedPrevious">${YN.map(o=>choiceHTML("c"+idx+"_relatedPrevious",o,false)).join("")}</div>
+    </fieldset>
+    <hr style="border:none;border-top:1px solid #eef2f2;margin:16px 0;">
+  `;
+  wrap.appendChild(div);
+}
+document.addEventListener("click", function(e){
+  if(e.target.id==="addComplaintBtn"){ addComplaint(); }
+  if(e.target.dataset && e.target.dataset.remove){
+    const idx = e.target.dataset.remove;
+    const block = document.querySelector(`.complaint-block[data-idx="${idx}"]`);
+    if(block) block.remove();
+  }
+});
+
+/* ============================================================
+   CONDITIONAL SHOW/HIDE
+   ============================================================ */
+function refreshConditionals(){
+  document.querySelectorAll(".conditional[data-show-for]").forEach(cond=>{
+    const group = cond.dataset.showFor;
+    const val = cond.dataset.showVal;
+    const checked = document.querySelector(`input[name="${group}"]:checked`);
+    cond.classList.toggle("show", !!checked && checked.value === val);
+  });
+  // imaging results block: show if anything other than "No" selected
+  const imgChecks = document.querySelectorAll('input[name="imagingDone[]"]:checked');
+  const showImg = Array.from(imgChecks).some(i=>i.value!=="No");
+  document.getElementById("imagingResultsBlock").classList.toggle("show", showImg);
+}
+
+/* ============================================================
+   WIZARD NAVIGATION
+   ============================================================ */
+function showStep(n){
+  document.querySelectorAll(".step").forEach(s=>{
+    s.classList.toggle("active", parseInt(s.dataset.step)===n);
+  });
+  document.getElementById("progressFill").style.width = Math.round((n-1)/(TOTAL_STEPS-1)*100)+"%";
+  document.getElementById("progressLabel").textContent = `Step ${n} of ${TOTAL_STEPS}`;
+  document.getElementById("btnBack").style.visibility = n===1 ? "hidden":"visible";
+  document.getElementById("btnNext").style.display = n===TOTAL_STEPS ? "none":"block";
+  document.getElementById("btnSubmit").style.display = n===TOTAL_STEPS ? "block":"none";
+  if(n===TOTAL_STEPS) buildReview();
+  window.scrollTo(0,0);
+}
+
+function validateStep(n){
+  const stepEl = document.querySelector(`.step[data-step="${n}"]`);
+  const required = stepEl.querySelectorAll("[required]");
+  for(const r of required){ if(!r.value){ r.focus(); return false; } }
+  if(n===1 && !document.getElementById("consentContact").checked){
+    alert("Please agree to be contacted electronically to continue.");
+    return false;
+  }
+  return true;
+}
+
+document.getElementById("btnNext").addEventListener("click", ()=>{
+  if(!validateStep(currentStep)) return;
+  if(currentStep < TOTAL_STEPS){ currentStep++; showStep(currentStep); }
+});
+document.getElementById("btnBack").addEventListener("click", ()=>{
+  if(currentStep>1){ currentStep--; showStep(currentStep); }
+});
+document.getElementById("btnStart").addEventListener("click", ()=>{
+  document.getElementById("screenIntro").style.display="none";
+  document.getElementById("wizardWrap").classList.add("active");
+  const today = new Date().toISOString().slice(0,10);
+  document.querySelector('[name="regDate"]').value = today;
+});
+
+/* ============================================================
+   DATA COLLECTION
+   ============================================================ */
+function collectFormData(){
+  const form = document.getElementById("intakeForm");
+  const fd = new FormData(form);
+  const data = {};
+  for(const [key,val] of fd.entries()){
+    if(key.endsWith("[]")){
+      const k = key.slice(0,-2);
+      if(!data[k]) data[k]=[];
+      data[k].push(val);
+    } else {
+      data[key]=val;
+    }
+  }
+  // radio-only groups not captured by FormData if none selected are just absent - fine.
+  // collect complaints structured
+  const complaints = [];
+  document.querySelectorAll(".complaint-block").forEach(block=>{
+    const idx = block.dataset.idx;
+    complaints.push({
+      idx,
+      location: data["c"+idx+"_location"] || "",
+      descriptors: data["c"+idx+"_descriptors"] || [],
+      frequency: data["c"+idx+"_frequency"] || "",
+      severity: data["c"+idx+"_severity"] || "",
+      radiation: data["c"+idx+"_radiation"] || "",
+      timing: data["c"+idx+"_timing"] || [],
+      change: data["c"+idx+"_change"] || "",
+      helps: data["c"+idx+"_helps"] || [],
+      worsens: data["c"+idx+"_worsens"] || [],
+      relatedPrevious: data["c"+idx+"_relatedPrevious"] || ""
+    });
+  });
+  data._complaints = complaints;
+
+  // ROS structured
+  const ros = [];
+  ROS.forEach(([system,items])=>{
+    items.forEach(item=>{
+      const key = "ros_"+system.replace(/[^a-z]/gi,"")+"_"+item.replace(/[^a-z]/gi,"");
+      ros.push({system,item, value: data[key]||"", after: !!data[key+"_after"]});
+    });
+  });
+  data._ros = ros;
+  return data;
+}
+
+/* ============================================================
+   REVIEW SCREEN
+   ============================================================ */
+function label(v){ return Array.isArray(v) ? (v.length? v.join(", "):"—") : (v || "—"); }
+function buildReview(){
+  const data = collectFormData();
+  const wrap = document.getElementById("reviewWrap");
+  let html = "";
+  function section(title, rows){
+    html += `<div class="review-section"><h3>${title}</h3>`;
+    rows.forEach(([k,v])=>{ html += `<div class="review-item"><div class="k">${k}</div><div class="v">${label(v)}</div></div>`; });
+    html += `</div>`;
+  }
+  section("Your Information",[
+    ["Name",data.fullName],["DOB",data.birthDate],["Address",[data.address,data.apt,data.city,data.state,data.zip].filter(Boolean).join(", ")],
+    ["Cell",data.cell],["Email",data.email],["Language",data.language]
+  ]);
+  section("Accident",[
+    ["Date/Time",[data.accidentDate,data.accidentTime].filter(Boolean).join(" ")],
+    ["Location",[data.accidentStreet,data.accidentCity].filter(Boolean).join(", ")],
+    ["Injuries",data.injuriesDescribe],["Vehicle damage",data.vehicleDamage]
+  ]);
+  section("Pain",[["Areas",data.painAreas],["Intensity",data.painIntensity]]);
+  data._complaints.forEach(c=>{
+    section(`Complaint #${c.idx}`, [
+      ["Location",c.location],["Quality",c.descriptors],["Frequency",c.frequency],
+      ["Severity",c.severity],["Radiation",c.radiation]
+    ]);
+  });
+  section("Medical History",[
+    ["Surgery",data.mh_surgery],["Daily medication",data.mh_meds],["Health problems",data.mh_health],
+    ["Previous accident",data.mh_prev_accident],["Family history",data.mh_family],["Critical conditions",data.mh_critical]
+  ]);
+  wrap.innerHTML = html;
+}
+
+/* ============================================================
+   PDF GENERATION
+   ============================================================ */
+function fmtDate(d){
+  if(!d) return "____/____/______";
+  const parts = d.split("-");
+  if(parts.length===3) return `${parts[1]}/${parts[2]}/${parts[0]}`;
+  return d;
+}
+
+function newDoc(){
+  const { jsPDF } = window.jspdf;
+  return new jsPDF({unit:"pt",format:"letter"});
+}
+
+function drawLetterhead(doc,title){
+  doc.setFillColor(77,127,133);
+  doc.rect(0,0,612,64,"F");
+  doc.setTextColor(255,255,255);
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(16);
+  doc.text(CLINIC.name,40,28);
+  doc.setFont("helvetica","normal");
+  doc.setFontSize(9.5);
+  doc.text(`${CLINIC.address}, ${CLINIC.cityStateZip}  |  ${CLINIC.phone}`,40,44);
+  doc.setFontSize(13);
+  doc.setFont("helvetica","bold");
+  doc.text(title,40,58);
+  doc.setTextColor(35,50,56);
+}
+
+function pdfCursor(){ return {y:84,pageH:730,x:40,w:532}; }
+
+function ensureSpace(doc,cur,needed){
+  if(cur.y+needed>cur.pageH){ doc.addPage(); cur.y=50; }
+}
+function h2(doc,cur,text){
+  ensureSpace(doc,cur,26);
+  doc.setFillColor(232,241,242);
+  doc.rect(cur.x,cur.y-12,cur.w,20,"F");
+  doc.setFont("helvetica","bold"); doc.setFontSize(11.5);
+  doc.setTextColor(58,97,103);
+  doc.text(text,cur.x+6,cur.y+2);
+  doc.setTextColor(35,50,56);
+  cur.y += 22;
+}
+function kv(doc,cur,k,v){
+  const val = label(v);
+  doc.setFont("helvetica","bold"); doc.setFontSize(9.5);
+  const kw = 150;
+  const lines = doc.splitTextToSize(val, cur.w-kw);
+  ensureSpace(doc,cur, 14*Math.max(lines.length,1)+4);
+  doc.text(k,cur.x,cur.y);
+  doc.setFont("helvetica","normal");
+  doc.text(lines,cur.x+kw,cur.y);
+  cur.y += 14*Math.max(lines.length,1)+4;
+}
+function para(doc,cur,text){
+  doc.setFont("helvetica","normal"); doc.setFontSize(9.8);
+  const lines = doc.splitTextToSize(text, cur.w);
+  ensureSpace(doc,cur,14*lines.length+6);
+  doc.text(lines,cur.x,cur.y);
+  cur.y += 14*lines.length+8;
+}
+
+function generateIntakePDF(data){
+  const doc = newDoc();
+  drawLetterhead(doc,"Patient Intake Summary");
+  const cur = pdfCursor();
+
+  h2(doc,cur,"Patient Information");
+  kv(doc,cur,"Full Name",data.fullName);
+  kv(doc,cur,"Date of Birth",data.birthDate);
+  kv(doc,cur,"Address",[data.address,data.apt,data.city,data.state,data.zip].filter(Boolean).join(", "));
+  kv(doc,cur,"Cell Phone",data.cell);
+  kv(doc,cur,"Email",data.email);
+  kv(doc,cur,"Language / Interpreter",[data.language, data.interpreterNeed?("Interpreter needed: "+data.interpreterNeed):""].filter(Boolean).join(" — "));
+  kv(doc,cur,"Consent to electronic contact",data.consentContact?"Yes":"No");
+
+  h2(doc,cur,"Accident Details");
+  kv(doc,cur,"Date / Time of Accident",[data.accidentDate,data.accidentTime].filter(Boolean).join(" "));
+  kv(doc,cur,"Location",[data.accidentStreet,data.accidentCity].filter(Boolean).join(", "));
+  kv(doc,cur,"License Plate",data.licensePlate);
+  kv(doc,cur,"Auto Insurance",data.autoInsurance);
+  kv(doc,cur,"Injuries",data.injuriesDescribe);
+  kv(doc,cur,"Ambulance called",data.ambulance);
+  kv(doc,cur,"ER / Hospital",data.erHospital);
+  kv(doc,cur,"MassHealth",data.masshealth);
+  kv(doc,cur,"MassHealth Card",data.masshealthCard);
+  kv(doc,cur,"MassHealth ID",data.masshealthId);
+  kv(doc,cur,"Private Health Insurance",data.privateInsurance);
+  kv(doc,cur,"Health Insurance Card",data.healthInsCard);
+  kv(doc,cur,"Bodyshop",data.bodyshopWhich);
+  kv(doc,cur,"Rideshare",data.rideshareWhich);
+  kv(doc,cur,"Police Report",data.policeReport);
+  kv(doc,cur,"Vehicle Damage Location(s)",data.vehicleDamage);
+  kv(doc,cur,"Accident Description",data.accidentDescription);
+  kv(doc,cur,"PIP Claim #",data.pipClaimNumber);
+  kv(doc,cur,"Policy #",data.policyNumber);
+  kv(doc,cur,"Policy Holder",data.policyHolderName);
+  kv(doc,cur,"Policy Holder DOB",data.policyHolderDob);
+
+  h2(doc,cur,"Pain Diagram");
+  kv(doc,cur,"Areas of Pain",data.painAreas);
+  kv(doc,cur,"Pain Intensity (0-10)",data.painIntensity);
+
+  h2(doc,cur,"Medical History");
+  kv(doc,cur,"Surgery",data.mh_surgery==="Yes" ? `Yes — ${data.mh_surgery_what||""} (${data.mh_surgery_when||""})` : data.mh_surgery);
+  kv(doc,cur,"Daily medication",data.mh_meds==="Yes" ? `Yes — ${data.mh_meds_what||""}, prescribed by ${data.mh_meds_who||""}` : data.mh_meds);
+  kv(doc,cur,"Health problems",data.mh_health==="Yes" ? `Yes — ${data.mh_health_what||""} since ${data.mh_health_since||""}` : data.mh_health);
+  kv(doc,cur,"Previous accident",data.mh_prev_accident==="Yes" ? `Yes — ${data.mh_prev_what||""} (${data.mh_prev_when||""}), treatment: ${data.mh_prev_treatment||""}` : data.mh_prev_accident);
+  kv(doc,cur,"Family history",data.mh_family);
+  kv(doc,cur,"Critical conditions",data.mh_critical);
+
+  h2(doc,cur,"MVA Chief Complaints");
+  kv(doc,cur,"Cause of injury",data.causeOfInjury);
+  kv(doc,cur,"Date of injury",data.dateOfInjury);
+  kv(doc,cur,"Position in vehicle",data.positionInVehicle);
+  kv(doc,cur,"Restrained",data.restrained);
+  kv(doc,cur,"Airbag deployed",data.airbagDeploy);
+  kv(doc,cur,"Head hit head rest",data.headHitHeadrest);
+  kv(doc,cur,"Head position during impact",data.headDuringImpact);
+  kv(doc,cur,"Contact w/ vehicle interior",data.contactInterior);
+  kv(doc,cur,"Body part contacted",data.bodyPartContact);
+  kv(doc,cur,"Vehicle part contacted",data.vehiclePartContact);
+  kv(doc,cur,"Head injury",data.headInjury);
+  kv(doc,cur,"Loss of consciousness",data.lossConsciousness);
+  kv(doc,cur,"Police at scene",data.policeAtScene);
+  kv(doc,cur,"Accident report filed",data.accidentReport);
+  kv(doc,cur,"EMS at scene",data.emsAtScene);
+  kv(doc,cur,"Transport to ER",data.transportER);
+  kv(doc,cur,"Imaging done",data.imagingDone);
+  IMAGING_RESULT_KEYS.forEach(([key,lbl])=>{
+    if(data["imgres_"+key]) kv(doc,cur,lbl+" result",data["imgres_"+key]);
+  });
+
+  h2(doc,cur,"Complaint Details");
+  data._complaints.forEach(c=>{
+    doc.setFont("helvetica","bold"); doc.setFontSize(10);
+    ensureSpace(doc,cur,16);
+    doc.text(`Complaint #${c.idx}: ${c.location||"(location not specified)"}`,cur.x,cur.y);
+    cur.y+=14;
+    kv(doc,cur,"Quality",c.descriptors);
+    kv(doc,cur,"Frequency",c.frequency);
+    kv(doc,cur,"Severity (0-10)",c.severity);
+    kv(doc,cur,"Radiation",c.radiation);
+    kv(doc,cur,"When felt",c.timing);
+    kv(doc,cur,"Change since accident",c.change);
+    kv(doc,cur,"What helps",c.helps);
+    kv(doc,cur,"What worsens",c.worsens);
+    kv(doc,cur,"Related to previous episode",c.relatedPrevious);
+    cur.y += 6;
+  });
+
+  h2(doc,cur,"Since the Accident");
+  kv(doc,cur,"Treatment received",data.treatmentSince);
+  kv(doc,cur,"Work situation",[data.workSituation,data.workNotWorkingReason].flat().filter(Boolean).join(" — "));
+  kv(doc,cur,"Social habits",data.socialHabits);
+  kv(doc,cur,"Exercise change",data.exerciseChange);
+  kv(doc,cur,"Diet change",data.dietChange);
+
+  h2(doc,cur,"Review of Systems");
+  const posROS = data._ros.filter(r=>r.value==="Y");
+  if(posROS.length){
+    kv(doc,cur,"Positive findings", posROS.map(r=>`${r.item}${r.after?" (after accident)":""}`).join("; "));
+  } else {
+    kv(doc,cur,"Positive findings","None reported");
+  }
+
+  h2(doc,cur,"Signature");
+  kv(doc,cur,"Patient Signature",data.signatureName);
+  kv(doc,cur,"Date",data.regDate);
+
+  addFooterPageNumbers(doc);
+  return doc;
+}
+
+function addFooterPageNumbers(doc){
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let i=1;i<=pageCount;i++){
+    doc.setPage(i);
+    doc.setFont("helvetica","normal"); doc.setFontSize(8);
+    doc.setTextColor(140,150,155);
+    doc.text(`${CLINIC.name} — Patient Intake  |  Page ${i} of ${pageCount}`,40,772);
+    doc.setTextColor(35,50,56);
+  }
+}
+
+/* ---- Doctor's Note (Subjective section only, per office policy) ---- */
+function composeMechanismParagraph(data){
+  const name = data.fullName || "The patient";
+  const cause = (data.causeOfInjury||"a motor vehicle").toLowerCase();
+  const dateAcc = fmtDate(data.accidentDate);
+  let s = `${name} presents to office today for complaint(s) resulting from a ${cause} incident on ${dateAcc}. `;
+  if(data.positionInVehicle) s += `${name.split(" ")[0]} was positioned as the ${data.positionInVehicle.toLowerCase()}, `;
+  if(data.restrained) s += `and reported restraint status as: ${data.restrained}. `;
+  if(data.airbagDeploy) s += `Airbag deployment: ${data.airbagDeploy}. `;
+  if(data.headHitHeadrest) s += `Head contact with head restraint: ${data.headHitHeadrest}. `;
+  if(data.headDuringImpact) s += `Patient reported their head was ${data.headDuringImpact.toLowerCase()} at the time of impact. `;
+  if(data.contactInterior){
+    s += `Patient contact with vehicle interior: ${data.contactInterior}`;
+    if(data.contactInterior==="Yes" && data.bodyPartContact && data.bodyPartContact.length) s += ` (${data.bodyPartContact.join(", ")})`;
+    s += ". ";
+  }
+  if(data.headInjury) s += `Reported head injury: ${data.headInjury}. `;
+  if(data.lossConsciousness) s += `Loss of consciousness: ${data.lossConsciousness}. `;
+  s += `Police at scene: ${data.policeAtScene||"not reported"}; accident report completed: ${data.accidentReport||"not reported"}; EMS at scene: ${data.emsAtScene||"not reported"}. `;
+  s += `Transport to ER: ${data.transportER||"not reported"}. `;
+  if(data.treatmentSince && data.treatmentSince.length) s += `Treatment received since accident: ${data.treatmentSince.join(", ")}.`;
+  return s;
+}
+function composeComplaintParagraph(c,idx){
+  let s = `Complaint #${idx}: Discomfort in the following region(s): ${c.location||"not specified"}`;
+  if(c.descriptors && c.descriptors.length) s += `, described as ${c.descriptors.join(", ").toLowerCase()}`;
+  s += ". ";
+  if(c.frequency) s += `Frequency: ${c.frequency}. `;
+  if(c.severity!=="") s += `Severity presently rated ${c.severity}/10 by patient report. `;
+  if(c.radiation) s += `Radiation: ${c.radiation}. `;
+  if(c.change) s += `Since onset, complaint has ${c.change.toLowerCase()}. `;
+  if(c.helps && c.helps.length) s += `Relieved by: ${c.helps.join(", ").toLowerCase()}. `;
+  if(c.worsens && c.worsens.length) s += `Aggravated by: ${c.worsens.join(", ").toLowerCase()}. `;
+  if(c.relatedPrevious) s += `Relation to previous episode: ${c.relatedPrevious}.`;
+  return s;
+}
+
+function generateDoctorsNotePDF(data){
+  const doc = newDoc();
+  drawLetterhead(doc,"Initial Exam — Clinical Note (Draft)");
+  const cur = pdfCursor();
+
+  doc.setFont("helvetica","italic"); doc.setFontSize(8.5);
+  doc.setTextColor(150,60,55);
+  const notice = "This draft is auto-generated from the patient's self-reported intake. Objective examination, Assessment, Diagnosis, and Plan must be completed by the treating provider and are NOT pre-filled.";
+  const noticeLines = doc.splitTextToSize(notice,cur.w);
+  doc.text(noticeLines,cur.x,cur.y);
+  cur.y += 14*noticeLines.length+8;
+  doc.setTextColor(35,50,56);
+
+  h2(doc,cur,"Patient / Visit Information");
+  kv(doc,cur,"Patient",data.fullName);
+  kv(doc,cur,"DOB",data.birthDate);
+  kv(doc,cur,"MRN","[to be assigned]");
+  kv(doc,cur,"Payer","[front desk to complete]");
+  kv(doc,cur,"Insured ID",data.pipClaimNumber || "[front desk to complete]");
+  kv(doc,cur,"Date of Service",new Date().toLocaleDateString("en-US"));
+  kv(doc,cur,"Case","MVA (1) - "+fmtDate(data.accidentDate));
+  kv(doc,cur,"Provider","[to be assigned]");
+  kv(doc,cur,"Appointment Type","MVA - Initial Exam");
+
+  h2(doc,cur,"Subjective");
+  doc.setFont("helvetica","bold"); doc.setFontSize(10);
+  ensureSpace(doc,cur,14);
+  doc.text("Mechanism of injury:",cur.x,cur.y); cur.y+=14;
+  para(doc,cur,composeMechanismParagraph(data));
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(10);
+  ensureSpace(doc,cur,14);
+  doc.text("Current history:",cur.x,cur.y); cur.y+=14;
+  if(data._complaints.length===0){
+    para(doc,cur,"No specific complaint detail provided.");
+  } else {
+    data._complaints.forEach((c,i)=>{ para(doc,cur,composeComplaintParagraph(c,i+1)); });
+  }
+  const interpNote = data.interpreterNeed==="Yes" ? "Interpreter was requested for this visit." : "No interpreter was requested for this visit.";
+  para(doc,cur,interpNote);
+
+  h2(doc,cur,"Review of Systems");
+  const posROS = data._ros.filter(r=>r.value==="Y");
+  para(doc,cur, posROS.length ? "Patient reports: "+posROS.map(r=>r.item+(r.after?" (after accident)":"")).join(", ")+"." : "No positive findings reported by patient.");
+
+  h2(doc,cur,"Past, Family and Social History");
+  kv(doc,cur,"Surgery",data.mh_surgery==="Yes" ? `${data.mh_surgery_what||""} (${data.mh_surgery_when||""})` : "None reported");
+  kv(doc,cur,"Medications",data.mh_meds==="Yes" ? `${data.mh_meds_what||""}` : "None reported");
+  kv(doc,cur,"Illnesses",data.mh_health==="Yes" ? `${data.mh_health_what||""}` : "None reported");
+  kv(doc,cur,"Prior accidents",data.mh_prev_accident==="Yes" ? `${data.mh_prev_what||""} (${data.mh_prev_when||""})` : "None reported");
+  kv(doc,cur,"Family history",data.mh_family && data.mh_family.length ? data.mh_family : "Denies");
+  kv(doc,cur,"Employment status",data.workSituation);
+  kv(doc,cur,"Social habits",data.socialHabits && data.socialHabits.length ? data.socialHabits : "Denies");
+  kv(doc,cur,"Critical conditions flagged",data.mh_critical && data.mh_critical.length ? data.mh_critical : "None");
+
+  h2(doc,cur,"Objective");
+  doc.setFont("helvetica","italic"); doc.setFontSize(9.5);
+  para(doc,cur,"[ To be completed by provider following physical examination. ]");
+
+  h2(doc,cur,"Assessment");
+  para(doc,cur,"[ To be completed by provider. ]");
+
+  h2(doc,cur,"Diagnosis");
+  para(doc,cur,"[ To be completed by provider. ]");
+
+  h2(doc,cur,"Plan");
+  para(doc,cur,"[ To be completed by provider. ]");
+
+  doc.setFont("helvetica","normal"); doc.setFontSize(9.5);
+  ensureSpace(doc,cur,40);
+  cur.y += 10;
+  doc.text("Provider signature: ______________________________",cur.x,cur.y);
+  cur.y += 20;
+  doc.text("Date: ______________________",cur.x,cur.y);
+
+  addFooterPageNumbers(doc);
+  return doc;
+}
+
+/* ============================================================
+   SUBMIT FLOW
+   ============================================================ */
+async function blobToBase64(blob){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onloadend = ()=>resolve(reader.result.split(",")[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+let lastIntakeDoc = null, lastNoteDoc = null, lastFullName = "patient";
+
+document.getElementById("btnSubmit").addEventListener("click", async ()=>{
+  const errEl = document.getElementById("submitError");
+  errEl.style.display="none";
+  const sigName = document.getElementById("signatureName").value.trim();
+  const finalConsent = document.getElementById("finalConsent").checked;
+  if(!sigName || !finalConsent){
+    errEl.textContent = "Please type your name as your signature and check the confirmation box.";
+    errEl.style.display="block";
+    return;
+  }
+  document.getElementById("btnSubmit").disabled = true;
+  document.getElementById("btnSubmit").textContent = "Submitting…";
+
+  const data = collectFormData();
+  lastFullName = (data.fullName||"patient").replace(/[^a-z0-9]/gi,"_");
+
+  const intakeDoc = generateIntakePDF(data);
+  const noteDoc = generateDoctorsNotePDF(data);
+  lastIntakeDoc = intakeDoc; lastNoteDoc = noteDoc;
+
+  // Show completion screen right away with download options
+  document.getElementById("wizardWrap").classList.remove("active");
+  document.getElementById("wizardNav").style.display="none";
+  document.getElementById("screenDone").classList.add("active");
+
+  const statusEl = document.getElementById("sendStatus");
+
+  if(!APPS_SCRIPT_URL){
+    statusEl.textContent = "Email delivery isn't configured yet — please use the download buttons below and send the PDFs to the front desk manually.";
+  } else {
+    try{
+      const intakeB64 = await blobToBase64(intakeDoc.output("blob"));
+      const noteB64 = await blobToBase64(noteDoc.output("blob"));
+      const bodyHtml = `<p>A new MVA intake was submitted through the online form.</p>
+        <p><b>Patient:</b> ${escapeHtml(data.fullName||"")}<br>
+        <b>Date of Accident:</b> ${escapeHtml(data.accidentDate||"")}<br>
+        <b>Submitted:</b> ${new Date().toLocaleString("en-US")}</p>
+        <p>Both the completed intake form and a draft clinical note (Subjective section only —
+        Objective/Assessment/Diagnosis/Plan are left for the provider) are attached as PDFs.</p>`;
+      const payload = {
+        subject: `MVA Intake — ${data.fullName||"New Patient"}`,
+        bodyHtml: bodyHtml,
+        attachments: [
+          { filename: `Intake_${lastFullName}.pdf`, mimeType: "application/pdf", base64: intakeB64 },
+          { filename: `DoctorsNote_${lastFullName}.pdf`, mimeType: "application/pdf", base64: noteB64 }
+        ]
+      };
+      const resp = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: {"Content-Type":"text/plain;charset=utf-8"},
+        body: JSON.stringify(payload)
+      });
+      let ok = resp.ok;
+      try{ const j = await resp.json(); ok = ok && j.ok !== false; }catch(e){}
+      if(ok){
+        statusEl.textContent = "Sent to the front desk successfully.";
+      } else {
+        statusEl.textContent = "We couldn't confirm delivery — please also use the download buttons below as a backup.";
+      }
+    } catch(err){
+      statusEl.textContent = "We couldn't send automatically — please use the download buttons below as a backup.";
+    }
+  }
+});
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+document.getElementById("dlIntake").addEventListener("click", ()=>{
+  if(lastIntakeDoc) lastIntakeDoc.save(`Intake_${lastFullName}.pdf`);
+});
+document.getElementById("dlNote").addEventListener("click", ()=>{
+  if(lastNoteDoc) lastNoteDoc.save(`DoctorsNote_${lastFullName}.pdf`);
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+buildStaticGrids();
+showStep(1);
+</script>
+</body>
+</html>
