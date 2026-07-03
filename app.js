@@ -388,6 +388,9 @@ function refreshConditionals(){
    MARKABLE DIAGRAM (car damage / body pain)
    Tap to place a red circle+X mark. Tap near an existing mark removes it.
    ============================================================ */
+// Resize functions for each built diagram, re-run whenever a step becomes visible
+// (canvases built while their .step is display:none get 0x0 dimensions otherwise).
+let diagramResizers = [];
 function buildDiagram(containerEl, imgSrc, marksArrKey, toolsLabels){
   containerEl.innerHTML = `
     <div class="diagram-wrap" id="${marksArrKey}_wrap">
@@ -444,6 +447,7 @@ function buildDiagram(containerEl, imgSrc, marksArrKey, toolsLabels){
 
   if(img.complete) resize(); else img.addEventListener("load", resize);
   window.addEventListener("resize", resize);
+  diagramResizers.push(resize);
   redraw();
 }
 
@@ -1007,6 +1011,9 @@ function showStep(n){
   if(n===TOTAL) buildReview();
   // keep signature stamps in sync as user moves forward (in case they signed after initial render)
   for(let i=2;i<=8;i++) renderSigStamp("sigStamp"+i);
+  // diagram canvases (car/body) are built while their step is display:none, so their
+  // canvas dimensions are 0x0 until we resize them once the step is actually visible
+  diagramResizers.forEach(fn=>fn());
   window.scrollTo(0,0);
 }
 
